@@ -7,6 +7,28 @@ describe('cypress', () => {
         })
     })
 
+    it('can load fixture with an alias, and used in cy.route', () => {
+      cy.fixture('example.json').as('example')
+      cy.server();
+      cy.route('GET', '/data.json', '@example').as('fetchData');
+
+      // Notice: cy.request will always use the real endpoint
+      // cy.request('/data.json');
+
+      // We have to make XHR request from page
+      cy.window().then((win: any) => {
+        const request = new win.XMLHttpRequest();
+        request.open('GET', '/data.json', true);
+        request.send()
+      })
+
+      cy.wait('@fetchData')
+        .then(res => res.response.body)
+        .should('deep.equal', {
+          "name": "cypress"
+        });
+    })
+
     it('can load text', () => {
       cy.fixture('hello.txt')
         .then(content => content.trim())
